@@ -14,6 +14,7 @@ int main(int argc, char *argv[]) {
     YAML::Node config = YAML::LoadFile("../config.yaml");
     const std::string host = config["server.host"].as<std::string>();
     int port = config["server.port"].as<std::int32_t>();
+    int backlog = config["server.backlog"].as<std::int32_t>();
     const std::string mode = config["server.mode"].as<std::string>();
 
     //暂时没用
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
     try {
         boost::asio::io_service ios;
         proxy::tcp_proxy::server server(ios,
-                                        host, port);
+                                        host, port, backlog);
         server.set_route_locators(*route_locators);
         server.accept_connections();
         ios.run();
