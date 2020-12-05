@@ -14,7 +14,6 @@ namespace proxy {
                   upstream_socket_(ios) {}
 
         void proxy::tcp_proxy::bridge::start(const std::string &upstream_host, unsigned short upstream_port) {
-            // Attempt connection to remote server (upstream side)
             upstream_socket_.async_connect(
                     ip::tcp::endpoint(
                             boost::asio::ip::address::from_string(upstream_host),
@@ -26,7 +25,6 @@ namespace proxy {
 
         void proxy::tcp_proxy::bridge::handle_upstream_connect(const boost::system::error_code &error) {
             if (!error) {
-                // Setup async read from remote server (upstream)
                 boost::asio::ip::tcp::no_delay no_delay(true);
                 upstream_socket_.set_option(no_delay);
                 upstream_socket_.async_read_some(
@@ -36,7 +34,6 @@ namespace proxy {
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred));
 
-                // Setup async read from client (downstream)
                 downstream_socket_.async_read_some(
                         boost::asio::buffer(downstream_data_, max_data_length),
                         boost::bind(&bridge::handle_downstream_read,

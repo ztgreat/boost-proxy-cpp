@@ -17,7 +17,11 @@ namespace proxy {
                   localhost_address(boost::asio::ip::address_v4::from_string(local_host)),
                   backlog(back_log),
                   acceptor_(io_service_, ip::tcp::endpoint(localhost_address, local_port)) {
-
+            this->acceptor_.listen(backlog);
+            boost::asio::ip::tcp::acceptor::reuse_address reuse_address(true);
+            boost::asio::ip::tcp::no_delay no_delay(true);
+            acceptor_.set_option(reuse_address);
+            acceptor_.set_option(no_delay);
         }
 
         void proxy::tcp_proxy::server::set_route_locators(std::vector<route_locator *> &route_locator) {
@@ -27,12 +31,6 @@ namespace proxy {
         bool proxy::tcp_proxy::server::accept_connections() {
             try {
                 session_ = boost::shared_ptr<tcp_proxy::bridge>(new bridge(io_service_));
-
-                acceptor_.listen(backlog);
-                boost::asio::ip::tcp::acceptor::reuse_address reuse_address(true);
-                boost::asio::ip::tcp::no_delay no_delay(true);
-                acceptor_.set_option(reuse_address);
-                acceptor_.set_option(no_delay);
                 acceptor_.async_accept(session_->downstream_socket(),
                                        boost::bind(&server::handle_accept,
                                                    this,
@@ -42,10 +40,8 @@ namespace proxy {
                 std::cerr << "acceptor exception: " << e.what() << std::endl;
                 return false;
             }
-
             return true;
         }
-
 
         void proxy::tcp_proxy::server::handle_accept(const boost::system::error_code &error) {
             if (!error) {
@@ -60,7 +56,6 @@ namespace proxy {
                     session_->downstream_socket().close();
                     return;
                 }
-
                 session_->start(upstreamServer->server, upstreamServer->port);
                 if (!accept_connections()) {
                     std::cerr << "accept fail" << std::endl;
