@@ -22,7 +22,7 @@ namespace proxy {
         public:
 
             server(boost::asio::io_service &io_service,
-                   const std::string &local_host, unsigned short local_port);
+                   const std::string &local_host, unsigned short local_port,size_t);
 
             bool accept_connections();
 
@@ -43,6 +43,7 @@ namespace proxy {
 
             boost::asio::io_service &io_service_;
             ip::address_v4 localhost_address;
+            size_t backlog;
             ip::tcp::acceptor acceptor_;
             std::vector<route_locator *> *route_locators;
             proxy::tcp_proxy::bridge::ptr_type session_;

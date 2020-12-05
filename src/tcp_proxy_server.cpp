@@ -11,9 +11,11 @@ namespace proxy {
         namespace ip = boost::asio::ip;
 
         proxy::tcp_proxy::server::server(boost::asio::io_service &io_service,
-                                         const std::string &local_host, unsigned short local_port)
+                                         const std::string &local_host, unsigned short local_port,
+                                         size_t back_log = 4096)
                 : io_service_(io_service),
                   localhost_address(boost::asio::ip::address_v4::from_string(local_host)),
+                  backlog(back_log),
                   acceptor_(io_service_, ip::tcp::endpoint(localhost_address, local_port)) {
 
         }
@@ -26,6 +28,7 @@ namespace proxy {
             try {
                 session_ = boost::shared_ptr<tcp_proxy::bridge>(new bridge(io_service_));
 
+                acceptor_.listen(backlog);
                 acceptor_.async_accept(session_->downstream_socket(),
                                        boost::bind(&server::handle_accept,
                                                    this,
