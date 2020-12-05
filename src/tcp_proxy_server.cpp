@@ -50,7 +50,8 @@ namespace proxy {
                     }
                 }
                 if (upstreamServer == nullptr) {
-                    std::cerr << "no route " << std::endl;
+                    session_->downstream_socket().close();
+                    return;
                 }
 
                 session_->start(upstreamServer->server, upstreamServer->port);
