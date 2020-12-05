@@ -29,8 +29,10 @@ namespace proxy {
                 session_ = boost::shared_ptr<tcp_proxy::bridge>(new bridge(io_service_));
 
                 acceptor_.listen(backlog);
-                boost::asio::ip::tcp::acceptor::reuse_address option(true);
-                acceptor_.set_option(option);
+                boost::asio::ip::tcp::acceptor::reuse_address reuse_address(true);
+                boost::asio::ip::tcp::no_delay no_delay(true);
+                acceptor_.set_option(reuse_address);
+                acceptor_.set_option(no_delay);
                 acceptor_.async_accept(session_->downstream_socket(),
                                        boost::bind(&server::handle_accept,
                                                    this,

@@ -27,6 +27,8 @@ namespace proxy {
         void proxy::tcp_proxy::bridge::handle_upstream_connect(const boost::system::error_code &error) {
             if (!error) {
                 // Setup async read from remote server (upstream)
+                boost::asio::ip::tcp::no_delay no_delay(true);
+                upstream_socket_.set_option(no_delay);
                 upstream_socket_.async_read_some(
                         boost::asio::buffer(upstream_data_, max_data_length),
                         boost::bind(&bridge::handle_upstream_read,
