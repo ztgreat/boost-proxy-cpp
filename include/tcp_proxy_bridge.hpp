@@ -26,12 +26,12 @@ namespace proxy {
             bridge(boost::asio::io_service &ios);
 
             socket_type &downstream_socket() {
-                // Client socket
+                // client socket
                 return downstream_socket_;
             }
 
             socket_type &upstream_socket() {
-                // Remote server socket
+                // up server socket
                 return upstream_socket_;
             }
 
@@ -58,8 +58,8 @@ namespace proxy {
             socket_type upstream_socket_;
 
             enum {
-                //8KB
-                max_data_length = 8192
+                //暂时设置 1500
+                max_data_length = 1500
             };
             unsigned char downstream_data_[max_data_length];
             unsigned char upstream_data_[max_data_length];

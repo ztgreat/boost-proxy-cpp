@@ -29,6 +29,8 @@ namespace proxy {
                 session_ = boost::shared_ptr<tcp_proxy::bridge>(new bridge(io_service_));
 
                 acceptor_.listen(backlog);
+                boost::asio::ip::tcp::acceptor::reuse_address option(true);
+                acceptor_.set_option(option);
                 acceptor_.async_accept(session_->downstream_socket(),
                                        boost::bind(&server::handle_accept,
                                                    this,
@@ -58,12 +60,11 @@ namespace proxy {
                 }
 
                 session_->start(upstreamServer->server, upstreamServer->port);
-                //session_->start(upstream_host_, upstream_port_);
                 if (!accept_connections()) {
-                    std::cerr << "Failure during call to accept." << std::endl;
+                    std::cerr << "accept fail" << std::endl;
                 }
             } else {
-                std::cerr << "Error: " << error.message() << std::endl;
+                std::cerr << "error: " << error.message() << std::endl;
             }
         }
 
