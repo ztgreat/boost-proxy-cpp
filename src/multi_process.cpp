@@ -140,8 +140,8 @@ namespace proxy {
                         if (g(status)) {
                             refork(pid);
                         }
-                    } else if(multi_process::sig != SIGINT) {
-                          refork(pid);
+                    } else if (multi_process::sig != SIGINT) {
+                        refork(pid);
                     }
                 }
             }
