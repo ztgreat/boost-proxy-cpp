@@ -17,11 +17,12 @@
 namespace proxy {
     namespace tcp_proxy {
         namespace ip = boost::asio::ip;
+
         class server {
         public:
 
             server(boost::asio::io_service &io_service,
-                   const std::string &local_host, unsigned short local_port,size_t);
+                   const std::string &local_host, unsigned short local_port, size_t);
 
             bool accept_connections();
 
@@ -42,6 +43,7 @@ namespace proxy {
 
         private:
             void handle_accept(const boost::system::error_code &error);
+
             static std::atomic_bool done;
             boost::asio::io_service &io_service_;
             ip::address_v4 localhost_address;

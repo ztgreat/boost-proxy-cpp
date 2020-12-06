@@ -8,6 +8,7 @@
 #include <sys/prctl.h>
 #include <sys/wait.h>
 #include <algorithm>
+#include <iostream>
 
 namespace proxy {
 
@@ -139,8 +140,8 @@ namespace proxy {
                         if (g(status)) {
                             refork(pid);
                         }
-                    } else {
-                        refork(pid);
+                    } else if(multi_process::sig != SIGINT) {
+                          refork(pid);
                     }
                 }
             }

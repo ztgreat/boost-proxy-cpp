@@ -37,18 +37,6 @@ namespace proxy {
         }
 
         void proxy::tcp_proxy::server::run() {
-            std::vector<int> sigs = proxy::process::multi_process::signals;
-            struct sigaction act{};
-            for (size_t i = 0; i < sigs.size(); ++i) {
-                memset(&act, 0, sizeof(struct sigaction));
-                sigemptyset(&act.sa_mask);
-                act.sa_sigaction = proxy::tcp_proxy::server::signal_normal_cb;
-                act.sa_flags = SA_SIGINFO;
-                if (sigaction(sigs[i], &act, nullptr) < 0) {
-                    perror("sigaction error");
-                    return;
-                }
-            }
             accept_connections();
             io_service_.run();
         }
