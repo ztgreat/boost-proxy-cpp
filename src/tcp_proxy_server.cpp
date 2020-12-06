@@ -5,10 +5,13 @@
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
 #include <tcp_proxy_server.hpp>
+#include <multi_process.hpp>
 
 namespace proxy {
     namespace tcp_proxy {
         namespace ip = boost::asio::ip;
+
+        std::atomic_bool proxy::tcp_proxy::server::done(true);
 
         proxy::tcp_proxy::server::server(boost::asio::io_service &io_service,
                                          const std::string &local_host, unsigned short local_port,
@@ -16,16 +19,38 @@ namespace proxy {
                 : io_service_(io_service),
                   localhost_address(boost::asio::ip::address_v4::from_string(local_host)),
                   backlog(back_log),
-                  acceptor_(io_service_, ip::tcp::endpoint(localhost_address, local_port)) {
+                  acceptor_(io_service_) {
+            acceptor_.open(boost::asio::ip::tcp::v4());
+            int one = 1;
+            setsockopt(this->acceptor_.native_handle(), SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &one, sizeof(one));
+            setsockopt(this->acceptor_.native_handle(), IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+            acceptor_.bind(ip::tcp::endpoint(localhost_address, local_port));
             this->acceptor_.listen(backlog);
-            boost::asio::ip::tcp::acceptor::reuse_address reuse_address(true);
-            boost::asio::ip::tcp::no_delay no_delay(true);
-            acceptor_.set_option(reuse_address);
-            acceptor_.set_option(no_delay);
         }
 
         void proxy::tcp_proxy::server::set_route_locators(std::vector<route_locator *> &route_locator) {
             this->route_locators = &route_locator;
+        }
+
+        void proxy::tcp_proxy::server::signal_normal_cb(int sig, siginfo_t *, void *) {
+            proxy::tcp_proxy::server::done = false;
+        }
+
+        void proxy::tcp_proxy::server::run() {
+            std::vector<int> sigs = proxy::process::multi_process::signals;
+            struct sigaction act{};
+            for (size_t i = 0; i < sigs.size(); ++i) {
+                memset(&act, 0, sizeof(struct sigaction));
+                sigemptyset(&act.sa_mask);
+                act.sa_sigaction = proxy::tcp_proxy::server::signal_normal_cb;
+                act.sa_flags = SA_SIGINFO;
+                if (sigaction(sigs[i], &act, nullptr) < 0) {
+                    perror("sigaction error");
+                    return;
+                }
+            }
+            accept_connections();
+            io_service_.run();
         }
 
         bool proxy::tcp_proxy::server::accept_connections() {

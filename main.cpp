@@ -3,11 +3,13 @@
 #include <iostream>
 #include <string>
 #include <route_locator.hpp>
+#include <wait.h>
 #include "tcp_proxy_server.hpp"
 #include "include/yaml-cpp/yaml.h"
 #include "route_predicate.hpp"
 #include "proxy_type.h"
 #include "util.hpp"
+#include "multi_process.hpp"
 
 int main(int argc, char *argv[]) {
 
@@ -23,6 +25,12 @@ int main(int argc, char *argv[]) {
         proxy_type = proxy::proxy_type::TCP;
     } else {
         proxy_type = proxy::proxy_type::HTTP;
+    }
+
+    const std::string worker_processes_str = config["server.worker.processes"].as<std::string>();
+    unsigned int worker_processes = std::thread::hardware_concurrency();
+    if (strcmp(worker_processes_str.c_str(), "auto") != 0) {
+        worker_processes = std::stoi(worker_processes_str);
     }
 
     const YAML::Node &routes = config["routes"];
@@ -67,17 +75,33 @@ int main(int argc, char *argv[]) {
         routeLocator->setLoadBalance(loadBalance);
         route_locators->insert(route_locators->end(), routeLocator);
     }
-    try {
-        boost::asio::io_service ios;
-        proxy::tcp_proxy::server server(ios,
-                                        host, port, backlog);
-        server.set_route_locators(*route_locators);
-        server.accept_connections();
-        ios.run();
-    }
-    catch (std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
-    }
+
+//    try {
+//        boost::asio::io_service ios;
+//        proxy::tcp_proxy::server server(ios,
+//                                        host, port, backlog);
+//        server.set_route_locators(*route_locators);
+//        server.run();
+//    } catch (std::exception &e) {
+//        std::cerr << "Error: " << e.what() << std::endl;
+//    }
+
+    std::function<void(pthread_mutex_t *, size_t *)> ff = [&](pthread_mutex_t *mtx, size_t *data) {
+        try {
+            boost::asio::io_service ios;
+            proxy::tcp_proxy::server server(ios,
+                                            host, port, backlog);
+            server.set_route_locators(*route_locators);
+            server.run();
+        } catch (std::exception &e) {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
+    };
+    std::function<bool(int)> g = [&](int status) {
+        std::cout << strsignal(WTERMSIG(status)) << std::endl;
+        return false;
+    };
+    proxy::process::multi_process main_process;
+    main_process.run(ff, g, worker_processes);
     return 0;
 }

@@ -1,5 +1,3 @@
-#include <cstddef>
-#include <string>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
