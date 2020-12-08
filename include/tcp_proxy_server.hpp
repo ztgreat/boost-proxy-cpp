@@ -49,7 +49,7 @@ namespace proxy {
                 void start(const std::string &upstream_host, unsigned short upstream_port);
 
 
-                void start();
+                bool start();
 
                 void handle_upstream_connect(const boost::system::error_code &error);
 

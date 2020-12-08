@@ -59,6 +59,7 @@ namespace proxy {
 
         void proxy::tcp_proxy::server::handle_accept(const boost::system::error_code &error) {
             if (!error) {
+                again:
                 if (this->sid_queue.empty()) {
                     session_->sid = ++this->sid;
                 } else {
@@ -76,7 +77,10 @@ namespace proxy {
                     client->downstream_socket_ = std::move(session_->downstream_socket_);
                     session_ = client;
                     this->clients[session_->sid] = session_;
-                    session_->start();
+                    if (session_->start()) {
+                        goto again;
+                    }
+
                 } else {
                     proxy::upstream_server *upstreamServer = nullptr;
                     for (auto route : *(this->route_locators)) {
@@ -116,7 +120,11 @@ namespace proxy {
                                 boost::asio::placeholders::error));
         }
 
-        void proxy::tcp_proxy::server::bridge::start() {
+        bool proxy::tcp_proxy::server::bridge::start() {
+
+            if (!upstream_socket_.is_open()) {
+                return false;
+            }
 
             upstream_socket_.async_read_some(
                     boost::asio::buffer(upstream_data_, max_data_length),
@@ -131,6 +139,8 @@ namespace proxy {
                                 shared_from_this(),
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred));
+
+            return true;
         }
 
 
