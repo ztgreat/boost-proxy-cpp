@@ -76,15 +76,15 @@ int main(int argc, char *argv[]) {
         route_locators->insert(route_locators->end(), routeLocator);
     }
 
-    try {
-        boost::asio::io_service ios;
-        proxy::tcp_proxy::server server(ios,
-                                        host, port, backlog);
-        server.set_route_locators(*route_locators);
-        server.run();
-    } catch (std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
+//    try {
+//        boost::asio::io_service ios;
+//        proxy::tcp_proxy::server server(ios,
+//                                        host, port, backlog);
+//        server.set_route_locators(*route_locators);
+//        server.run();
+//    } catch (std::exception &e) {
+//        std::cerr << "Error: " << e.what() << std::endl;
+//    }
 
     std::function<void(pthread_mutex_t *, size_t *)> ff = [&](pthread_mutex_t *mtx, size_t *data) {
         try {
