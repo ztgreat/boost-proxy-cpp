@@ -77,7 +77,7 @@ namespace proxy {
                     client->downstream_socket_ = std::move(session_->downstream_socket_);
                     session_ = client;
                     this->clients[session_->sid] = session_;
-                    if (session_->start()) {
+                    if (!session_->start()) {
                         goto again;
                     }
 
