@@ -74,6 +74,7 @@ namespace proxy {
                 if (client != nullptr) {
                     //session_->upstream_socket_ = std::move(client->upstream_socket());
                     client->sid = session_->sid;
+                    client->count = client->count + 1;
                     client->downstream_socket_ = std::move(session_->downstream_socket_);
                     session_ = client;
                     this->clients[session_->sid] = session_;
@@ -108,7 +109,7 @@ namespace proxy {
         proxy::tcp_proxy::server::bridge::bridge(boost::asio::io_service &ios,
                                                  proxy::tcp_proxy::server &server_ptr)
                 : downstream_socket_(ios),
-                  upstream_socket_(ios), server(server_ptr) {}
+                  upstream_socket_(ios), server(server_ptr), count(1) {}
 
         void proxy::tcp_proxy::server::bridge::start(const std::string &upstream_host, unsigned short upstream_port) {
             upstream_socket_.async_connect(
@@ -248,6 +249,11 @@ namespace proxy {
                     this->server.clients[this->sid] = shared_from_this();
                     this->server.sid_queue.push(this->sid);
                 }
+            }
+
+            if (upstream_socket_.is_open() && this->count >= 100) {
+                upstream_socket_.close();
+                this->server.clients.erase(this->sid);
             }
         }
 

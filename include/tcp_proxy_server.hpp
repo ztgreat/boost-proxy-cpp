@@ -28,6 +28,8 @@ namespace proxy {
 
                 size_t sid;
 
+                size_t  count;
+
                 typedef boost::shared_ptr<bridge> ptr_type;
 
                 socket_type downstream_socket_;
